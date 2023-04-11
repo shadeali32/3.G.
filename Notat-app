@@ -1,0 +1,244 @@
+State currentState;
+EditorWindow ew = new EditorWindow();
+Window ww = new Window();
+
+void setup(){
+  size(620,900);
+  ww.wsetup();
+  currentState = ww;
+}
+void draw(){   
+  background(255);
+  currentState.wdraw();
+ 
+}
+void mousePressed(){
+  currentState.wmousePressed();
+}
+
+void keyPressed(){
+  currentState.wkeyPressed();
+}
+
+    interface State { 
+void wsetup();
+void wdraw();
+void wmousePressed();
+void wkeyPressed();
+}
+
+class TekstFelt extends Knap {
+  String tekst = "";
+  TekstFelt(int x, int y, int w, int h) {
+    super(x, y, w, h);
+  }
+
+
+  void display () {
+    fill(200);
+    rect(x, y, w, h);
+    fill(33, 12, 12);
+    text(tekst, x+5, y+20);
+  }
+
+
+
+  void pressKey() {
+    // if(!klikket) return ;
+    if (x < mouseX && mouseX < x + w && y < mouseY && mouseY < y + h) {
+      klikket = true; 
+
+      if (keyCode != 8) {
+        tekst += key;
+      } else {
+        if (tekst.length() >0)
+          tekst = tekst.substring(0, tekst.length()-1);
+      }
+    }
+  }
+   //void gemfelt() {}
+}
+  
+ import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+
+class Window implements State {
+  Knap nytekst;
+  Knap load;
+  String newFileName="";
+  String oldFileName="";
+  
+  
+  Window() {
+    //wsetup();
+  }
+
+
+
+
+  void wsetup() {
+    nytekst = new Knap(500, 750, 90, 90);
+    load = new Knap(100, 100, 120, 120);
+    
+    updateOldNewFileNames();    
+ }
+ 
+ void updateOldNewFileNames(){
+    String path = sketchPath("data");
+    String[] files = listFileNames(path);
+    sort(files);                          //jeg vælger at sætte 1'ere bagefter filnavne for at lave nye - derfor er sorteringen vigtig så jeg kan vælge den sidste
+    oldFileName = files[files.length-1];  //nyeste fil!!
+    newFileName = files[files.length-1].replace(".txt","1.txt"); //laver nyt filnavn ved at tilføje et "1"
+ }
+ 
+
+  void wdraw() {
+    clear();
+    
+    nytekst.display();
+    if (nytekst.klikket) {
+      updateOldNewFileNames();
+      ew.t.tekst ="";
+      nytekst.klikket = false;
+      ew.navn = newFileName;
+      currentState=ew;
+      
+    }
+    load.display();
+    if (load.klikket) {
+      updateOldNewFileNames();
+      String c ="";
+      String[] linjer = loadStrings(oldFileName);
+      for (int i = 0; i < linjer.length; i++) {
+        c += linjer[i]+"";
+      }
+        load.klikket = false;  //jeg har flyttet denne linje ud af for-loopet
+        currentState = ew;     //jeg har flyttet denne linje ud af for-loopet - da tomme filer ellers ikke virker
+        ew.navn = oldFileName;
+        ew.t.tekst = c;
+      
+    }
+    fill(0, 0, 0);
+    textSize(70);
+    text("+", nytekst.x+29, nytekst.y+65);
+  }
+
+
+void wmousePressed() {
+  nytekst.isClicked();
+  load.isClicked();
+}
+
+void wkeyPressed() {
+}
+}
+
+String[] listFileNames(String dir) {
+  File file = new File(dir);
+  if (file.isDirectory()) {
+    String names[] = file.list();
+    return names;
+  } else {
+
+    return null;
+  }
+}
+
+class EditorWindow implements State {
+  Knap gem;
+  Knap tilbage;
+  TekstFelt t;
+  
+  String c ="";
+  String[] linjer;
+  String te = ".txt";
+  String navn = "tekst" + te;
+
+  EditorWindow() {
+    wsetup();
+  }
+
+  void wsetup() {
+    //size(500, 500);
+    tilbage= new Knap(20, 30, 40, 30);
+    gem = new Knap(470,800,90,45);    
+    t = new TekstFelt(70, 80, 490, 645);
+
+  }
+
+
+  void wdraw() {
+    clear();
+    textSize(20);
+    tilbage.display();
+    gem.display();
+    t.display();
+    //ny_notat
+    if (gem.klikket == true) {
+      
+      PrintWriter output = createWriter("data/"+navn);
+      output.println(t.tekst);
+      output.flush();
+      output.close();
+
+    }
+
+    if (tilbage.klikket) {    //clear();
+      tilbage.klikket = false;
+      currentState =ww;
+    }
+    fill(0,0,0);
+  textSize(25);
+  text("<--", tilbage.x+4, tilbage.y+24); 
+  }
+
+  void wmousePressed() {
+    println("mousePressed");
+    tilbage.isClicked();
+    gem.isClicked();
+    t.isClicked();
+    //t.gemdata();
+    
+  
+  }
+
+  void wkeyPressed() {
+    t.pressKey();
+  }
+}
+
+class Knap {
+ boolean klikket;
+ float x, y, w, h;
+  Knap(float x_, float y_, float w_, float h_){
+    x = x_;
+    y = y_; 
+    w = w_; 
+    h = h_;
+  }
+
+
+  void display() {
+    if(klikket) fill(150); else fill(200);   
+    rect(x, y, w, h);
+  }
+   
+  boolean isClicked(){
+    println("Is clecked i knap klassen");
+    if(x < mouseX && mouseX < x + w && y < mouseY && mouseY < y + h){
+     klikket = true; 
+    }
+    return klikket;
+  }
+  
+  void knapReleased(){
+    klikket = false;
+  }
+  
+  void pressKey(){
+    
+  }
+ 
+  }
